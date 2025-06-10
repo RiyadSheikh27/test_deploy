@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>drf-car</title>
+
+    <!-- Load static files -->
+    {% load static %}
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Django Rest Framework - CRUD</h1>
+
+        <!-- Form for adding a car -->
+        <form id="car-form">
+            <div class="input-group">
+                <label for="car-name">Car Name</label>
+                <input type="text" id="car-name" name="car_name" placeholder="Enter Car Name" required>
+            </div>
+            <div class="input-group">
+                <label for="car-version">Car Version</label>
+                <input type="text" id="car-version" name="car_version" placeholder="Enter Car Version" required>
+            </div>
+            <div class="input-group">
+                <label for="car-model">Car Model</label>
+                <input type="text" id="car-model" name="car_model" placeholder="Enter Car Model" required>
+            </div>
+            <button type="submit" class="btn-primary">Add Car</button>
+        </form>
+
+        <h2>Cars List</h2>
+        <!-- Button to fetch cars -->
+        <button id="fetch-cars-btn" class="btn-secondary">Display</button>
+
+        <!-- List of cars -->
+        <div id="cars-list"></div>
+    </div>
+
+    <script>
+        document.getElementById('car-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const carData = {
+                car_name: document.getElementById('car-name').value,
+                car_version: document.getElementById('car-version').value,
+                car_model: document.getElementById('car-model').value,
+            };
+
+            fetch('/api/cars/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(carData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Car Added!');
+                document.getElementById('car-form').reset();
+                fetchCars(); // Refresh the list of cars
+            });
+        });
+
+        document.getElementById('fetch-cars-btn').addEventListener('click', fetchCars);
+
+        function fetchCars() {
+            fetch('/api/cars/')
+                .then(response => response.json())
+                .then(data => {
+                    const carsList = document.getElementById('cars-list');
+                    carsList.innerHTML = ''; // Clear previous list
+                    data.data.forEach(car => {
+                        const carDiv = document.createElement('div');
+                        carDiv.classList.add('car-item');
+                        carDiv.innerHTML = `
+                            <h3>${car.car_name}</h3>
+                            <p><strong>Model:</strong> ${car.car_model}</p>
+                            <p><strong>Version:</strong> ${car.car_version}</p>
+                            <button class="delete-btn" data-id="${car.id}">Delete</button>
+                            <button class="patch-btn" data-id="${car.id}">Update</button>
+                        `;
+                        carsList.appendChild(carDiv);
+                    });
+
+                    // Add event listeners for delete and patch buttons
+                    document.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const carId = button.getAttribute('data-id');
+                            fetch(`/api/cars/${carId}`, {
+                                method: 'DELETE',
+                            }).then(() => fetchCars()); // Refresh list after deletion
+                        });
+                    });
+
+                    document.querySelectorAll('.patch-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const carId = button.getAttribute('data-id');
+                            const newCarName = prompt('Enter new car name:');
+                            const newCarVersion = prompt('Enter new car version:');
+                            const newCarModel = prompt('Enter new car model:');
+
+                            const patchData = {
+                                car_name: newCarName,
+                                car_version: newCarVersion,
+                                car_model: newCarModel,
+                            };
+
+                            fetch(`/api/cars/${carId}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(patchData),
+                            }).then(() => fetchCars()); // Refresh list after update
+                        });
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
