@@ -32,7 +32,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # ALLOWED_HOSTS = ['*']
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+DEBUG = DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+if not DEBUG:
+    ALLOWED_HOSTS = [
+        'test-deploy-53ji.onrender.com',
+        # Add any other production domains here
+    ]
+else:
+    ALLOWED_HOSTS = ['*']
 
 
 # Application definition
